@@ -1,0 +1,26 @@
+{
+  "name": "petal",
+  "version": "1.0.0",
+  "description": "A javascript blockchain",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jiajianou/petal.git"
+  },
+  "keywords": [
+    "javascript",
+    "blockchain"
+  ],
+  "author": "Jiajian Ou",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Jiajianou/petal/issues"
+  },
+  "homepage": "https://github.com/Jiajianou/petal#readme",
+  "dependencies": {
+    "sha256": "^0.2.0"
+  }
+}
