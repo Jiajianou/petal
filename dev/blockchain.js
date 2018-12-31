@@ -72,6 +72,7 @@ Blockchain.prototype.hashBlock = function(previousBlockHash, currentBlockData, n
 
 Blockchain.prototype.proofOfWork = function(previousBlockHash, currentBlockData){
 
+  // the nonce will start from 0, and it will increment by 1 to find the correct hash.
   let nonce = 0;
   let hash = this.hashBlock(previousBlockHash,currentBlockData,nonce);
 
@@ -80,7 +81,7 @@ Blockchain.prototype.proofOfWork = function(previousBlockHash, currentBlockData)
     hash = this.hashBlock(previousBlockHash,currentBlockData,nonce);
   }
 
-  return nonce;
+  return nonce; //returns the correct nonce that will make the hash begins with four zeros(AKA the right hash).
 };
 
 
