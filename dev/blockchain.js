@@ -8,6 +8,8 @@ function Blockchain(){
   this.chain =[];
   this.pendingTransactions = []; //pending transactions untial the block is mined
 
+  this.createNewBlock(100, 'thisIsTheGenesisBlock', '0'); //genesis block.
+
 
 }
 
@@ -66,6 +68,19 @@ Blockchain.prototype.hashBlock = function(previousBlockHash, currentBlockData, n
 
   return hash;
 
+};
+
+Blockchain.prototype.proofOfWork = function(previousBlockHash, currentBlockData){
+
+  let nonce = 0;
+  let hash = this.hashBlock(previousBlockHash,currentBlockData,nonce);
+
+  while(hash.substring(0,4) !== '0000'){
+    nonce++;
+    hash = this.hashBlock(previousBlockHash,currentBlockData,nonce);
+  }
+
+  return nonce;
 };
 
 
