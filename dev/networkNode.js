@@ -18,14 +18,58 @@ app.get('/blockchain', function(req, res){
 
 });
 
+
+
+
+
+
 app.post('/transaction', function(req,res){
-  const blockIndex = petal.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
+  // const blockIndex = petal.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
+  //
+  // res.json({note:`Transaction will be added in blcok ${blockIndex}`});
 
-  res.json({note:`Transaction will be added in blcok ${blockIndex}`});
-
-
-
+  const newTransaction = req.body;
+  const blockIndex = petal.addTransactionToPendingTransactions(newTransaction);
+  
+  res.json({note: `Transaction will be added in block ${blockIndex}.`});
 });
+
+
+
+
+
+
+
+app.post('/transaction/broadcast',function(req,res){
+  const newTransaction = petal.createNewTransaction(req.body.amount,req.body.sender,req.body.recipient);
+  petal.addTransactionToPendingTransactions(newTransaction);
+
+  const requestPromises = [];
+
+  petal.networkNodes.forEach(networkNodeUrl =>{
+    //broadcast to other network nodes by sending requests.
+    const requestOptions = {
+      uri: networkNodeUrl + '/transaction',
+      method: 'POST',
+      body: newTransaction,
+      json: true
+    };
+    requestPromises.push(rp(requestOptions));
+  });
+
+  //running the request promises
+  Promise.all(requestPromises).then(data =>{
+    res.json({note: 'Transaction created and broadcasted successfully.'});
+  });
+});
+
+
+
+
+
+
+
+
 
 app.get('/mine', function(req, res){
 
@@ -52,37 +96,48 @@ app.get('/mine', function(req, res){
 });
 
 
+
+
+
+
+
+
+
 app.post('/register-and-broadcast-node', function(req, res){
 
   const newNodeUrl = req.body.newNodeUrl;
   //if the node url is not already in the list, the add it onto the list.
   if(petal.networkNodes.indexOf(newNodeUrl) == -1) petal.networkNodes.push(newNodeUrl);
 
-  const registerNodesPromises = [];
+  const regNodesPromises = [];
 
   //then broadcast it.
   petal.networkNodes.forEach(networkNodeUrl =>{
+
     //define a request option object
+
     const requestOptions = {
-      url: networkNodeUrl + '/register-node',
+      uri: networkNodeUrl + '/register-node',
       method: 'POST',
       body: {newNodeUrl:newNodeUrl},
       json:true
 
     };
 
-    registerNodesPromises.push(rp(requestOptions));
+    regNodesPromises.push(rp(requestOptions));
 
   });
 
   //registering this new node with all the nodes in the network.
-  Promise.all(registerNodesPromises).then(data =>{
+  Promise.all(regNodesPromises).then(data =>{
     const bulkRegisterOptions = {
-      url: newNodeUrl + '/register-node-bulk',
+      uri: newNodeUrl + '/register-nodes-bulk',
       method: 'POST',
       body: {allNetworkNodes: [...petal.networkNodes, petal.currentNodeUrl]},
       json:true
     };
+
+    return rp(bulkRegisterOptions);
 
   }).then(data => {
     res.json({note: "new node registered successfully"});
@@ -90,6 +145,11 @@ app.post('/register-and-broadcast-node', function(req, res){
 
 
 });
+
+
+
+
+
 
 
 app.post('/register-node', function(req,res){
@@ -103,6 +163,12 @@ app.post('/register-node', function(req,res){
   res.json({note:"New node registered successfully."});
 
 });
+
+
+
+
+
+
 
 app.post('/register-nodes-bulk', function(req,res){
   //register all nodes to the new node.
@@ -118,6 +184,12 @@ app.post('/register-nodes-bulk', function(req,res){
 
 
 });
+
+
+
+
+
+
 
 app.listen(port, function(){
   console.log(`The server is listening on port ${port}`);
