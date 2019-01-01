@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const Blockchain = require('./blockchain');
 const uuid = require('uuid/v1');
 const port = process.argv[2];
+const rp = require('request-promise');
 
 const nodeAddress = uuid().split("-").join("");
 
@@ -52,16 +53,70 @@ app.get('/mine', function(req, res){
 
 
 app.post('/register-and-broadcast-node', function(req, res){
+
   const newNodeUrl = req.body.newNodeUrl;
+  //if the node url is not already in the list, the add it onto the list.
+  if(petal.networkNodes.indexOf(newNodeUrl) == -1) petal.networkNodes.push(newNodeUrl);
+
+  const registerNodesPromises = [];
+
+  //then broadcast it.
+  petal.networkNodes.forEach(networkNodeUrl =>{
+    //define a request option object
+    const requestOptions = {
+      url: networkNodeUrl + '/register-node',
+      method: 'POST',
+      body: {newNodeUrl:newNodeUrl},
+      json:true
+
+    };
+
+    registerNodesPromises.push(rp(requestOptions));
+
+  });
+
+  //registering this new node with all the nodes in the network.
+  Promise.all(registerNodesPromises).then(data =>{
+    const bulkRegisterOptions = {
+      url: newNodeUrl + '/register-node-bulk',
+      method: 'POST',
+      body: {allNetworkNodes: [...petal.networkNodes, petal.currentNodeUrl]},
+      json:true
+    };
+
+  }).then(data => {
+    res.json({note: "new node registered successfully"});
+  });
+
+
 });
 
 
 app.post('/register-node', function(req,res){
+  //register a node with the network.
+  const newNodeUrl = req.body.newNodeUrl;
+  const nodeNotAlreadyPresent = petal.networkNodes.indexOf(newNodeUrl) == -1;
+  const notCurrentNode = petal.currentNodeUrl !== newNodeUrl;
+
+  if(nodeNotAlreadyPresent && notCurrentNode) petal.networkNodes.push(newNodeUrl);
+
+  res.json({note:"New node registered successfully."});
 
 });
 
 app.post('/register-nodes-bulk', function(req,res){
-  
+  //register all nodes to the new node.
+  const allNetworkNodes = req.body.allNetworkNodes;
+
+  allNetworkNodes.forEach(networkNodeUrl => {
+    const nodeNotAlreadyPresent = petal.networkNodes.indexOf(networkNodeUrl) == -1;
+    const notCurrentNode = petal.currentNodeUrl !== networkNodeUrl;
+    if(nodeNotAlreadyPresent && notCurrentNode) petal.networkNodes.push(networkNodeUrl);
+  });
+
+  res.json({note: "Bulk registration successfully"});
+
+
 });
 
 app.listen(port, function(){
