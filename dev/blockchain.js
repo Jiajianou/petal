@@ -1,5 +1,5 @@
 const sha256 = require('sha256');
-
+const currentNodeUrl = process.argv[3];
 
 
 //This is the constructor function for the data structure.
@@ -7,6 +7,9 @@ const sha256 = require('sha256');
 function Blockchain(){
   this.chain =[];
   this.pendingTransactions = []; //pending transactions untial the block is mined
+
+  this.currentNodeUrl = currentNodeUrl;
+  this.networkNodes = [];
 
   this.createNewBlock(100, 'thisIsTheGenesisBlock', '0'); //genesis block.
 
