@@ -12,7 +12,7 @@ function Blockchain(){
   this.currentNodeUrl = currentNodeUrl;
   this.networkNodes = [];
 
-  this.createNewBlock(100, 'thisIsTheGenesisBlock', '0'); //genesis block.
+  this.createNewBlock(100, '0000', '0000'); //genesis block.
 
 
 }
@@ -97,6 +97,38 @@ Blockchain.prototype.proofOfWork = function(previousBlockHash, currentBlockData)
   }
 
   return nonce; //returns the correct nonce that will make the hash begins with four zeros(AKA the right hash).
+};
+
+
+Blockchain.prototype.chainIsValid = function(blockchain) {
+
+  let validChain = true;
+
+  //the loop skips the genesis block.
+  for (var i = 1; i < blockchain.length; i++){
+    const currentBlock = blockchain[i];
+    const prevBlock = blockchain[i - 1];
+
+    //console.log(prevBlock['hash']);
+    //console.log(currentBlock['hash']);
+    //const blockHash = this.hashBlock(prevBlock['hash'], {transactions:currentBlock['transactions'], index: currentBlock['index']},currentBlock['nonce']);
+
+
+    //if(blockHash.substring(0,4) !== '0000') validChain = false;
+
+    if (currentBlock['previousBlockHash'] !== prevBlock['hash']) validChain = false;
+  };
+
+  const genesisBlock = blockchain[0];
+  const correctNonce = genesisBlock['nonce'] === 100;
+  const correctPreviousBlockHash = genesisBlock['previousBlockHash'] === '0000';
+  const correctHash = genesisBlock['hash'] === '0000';
+  const correctTransactions = genesisBlock['transactions'].length === 0;
+
+  if(!correctNonce || !correctPreviousBlockHash || !correctHash || !correctTransactions) validChain = false;
+
+  return validChain;
+
 };
 
 

@@ -252,6 +252,58 @@ app.post('/register-nodes-bulk', function(req,res){
 });
 
 
+app.get('/consensus', function(req, res){
+
+  const requestPromises = [];
+
+  petal.networkNodes.forEach(networkNodeUrl => {
+    const requestOptions = {
+      uri: networkNodeUrl + '/blockchain',
+      method: 'GET',
+      json: true
+    };
+
+    requestPromises.push(rp(requestOptions));
+
+  });
+
+  Promise.all(requestPromises).then(blockchains => {
+    //blockchains from all the network nodes.
+
+    const currentChainLength = petal.chain.length;
+    let maxChainLength = currentChainLength;
+    let newLongestChain = null;
+    let newPendingTransactions = null;
+
+    blockchains.forEach(blockchain => {
+      //determine wether or not there is a blockchain that is longer than all the other nodes.
+
+      if(blockchain.chain.length > maxChainLength){
+
+        maxChainLength = blockchain.chain.length;
+        newLongestChain = blockchain.chain;
+        newPendingTransactions = blockchain.pendingTransactions;
+      };
+
+    });
+
+    if(!newLongestChain || (newLongestChain && !petal.chainIsValid(newLongestChain))){
+      res.json({
+        note: 'Current chain has not been replaced.',
+        chain: petal.chain
+      })
+    } else if (newLongestChain && petal.chainIsValid(newLongestChain)){
+      petal.chain = newLongestChain;
+      petal.pendingTransactions = newPendingTransactions;
+      res.json({
+        note:'This chain has been replaced',
+        chain: petal.chain
+      });
+    };
+  });
+});
+
+
 
 
 
